@@ -1,27 +1,30 @@
 module MiqServer::WorkerManagement::Monitor::ClassNames
   extend ActiveSupport::Concern
 
-  MONITOR_CLASS_NAMES = %w{
+  MONITOR_CLASS_NAMES = %w(
     ManageIQ::Providers::Amazon::CloudManager::MetricsCollectorWorker
     ManageIQ::Providers::Redhat::InfraManager::MetricsCollectorWorker
+    ManageIQ::Providers::Kubernetes::ContainerManager::MetricsCollectorWorker
+    ManageIQ::Providers::Openshift::ContainerManager::MetricsCollectorWorker
     ManageIQ::Providers::Vmware::InfraManager::MetricsCollectorWorker
     ManageIQ::Providers::Openstack::CloudManager::MetricsCollectorWorker
     ManageIQ::Providers::Openstack::InfraManager::MetricsCollectorWorker
     MiqEmsMetricsProcessorWorker
     MiqEmsRefreshCoreWorker
+    ManageIQ::Providers::Azure::CloudManager::RefreshWorker
     ManageIQ::Providers::Amazon::CloudManager::RefreshWorker
     ManageIQ::Providers::Foreman::ConfigurationManager::RefreshWorker
     ManageIQ::Providers::Foreman::ProvisioningManager::RefreshWorker
-    MiqEmsRefreshWorkerKubernetes
-    MiqEmsRefreshWorkerOpenshift
-    MiqEmsRefreshWorkerMicrosoft
+    ManageIQ::Providers::Kubernetes::ContainerManager::RefreshWorker
+    ManageIQ::Providers::Openshift::ContainerManager::RefreshWorker
+    ManageIQ::Providers::Microsoft::InfraManager::RefreshWorker
     ManageIQ::Providers::Redhat::InfraManager::RefreshWorker
     ManageIQ::Providers::Openstack::CloudManager::RefreshWorker
     ManageIQ::Providers::Openstack::InfraManager::RefreshWorker
     ManageIQ::Providers::Vmware::InfraManager::RefreshWorker
     ManageIQ::Providers::Amazon::CloudManager::EventCatcher
-    MiqEventCatcherKubernetes
-    MiqEventCatcherOpenshift
+    ManageIQ::Providers::Kubernetes::ContainerManager::EventCatcher
+    ManageIQ::Providers::Openshift::ContainerManager::EventCatcher
     ManageIQ::Providers::Redhat::InfraManager::EventCatcher
     ManageIQ::Providers::Openstack::CloudManager::EventCatcher
     ManageIQ::Providers::Openstack::InfraManager::EventCatcher
@@ -41,13 +44,15 @@ module MiqServer::WorkerManagement::Monitor::ClassNames
     MiqVmdbStorageBridgeWorker
     MiqWebServiceWorker
     MiqAutomateWorker
-  }.freeze
+  ).freeze
 
-  MONITOR_CLASS_NAMES_IN_KILL_ORDER = %w{
+  MONITOR_CLASS_NAMES_IN_KILL_ORDER = %w(
     MiqAutomateWorker
     MiqEmsMetricsProcessorWorker
     ManageIQ::Providers::Amazon::CloudManager::MetricsCollectorWorker
     ManageIQ::Providers::Redhat::InfraManager::MetricsCollectorWorker
+    ManageIQ::Providers::Kubernetes::ContainerManager::MetricsCollectorWorker
+    ManageIQ::Providers::Openshift::ContainerManager::MetricsCollectorWorker
     ManageIQ::Providers::Vmware::InfraManager::MetricsCollectorWorker
     ManageIQ::Providers::Openstack::CloudManager::MetricsCollectorWorker
     ManageIQ::Providers::Openstack::InfraManager::MetricsCollectorWorker
@@ -60,12 +65,13 @@ module MiqServer::WorkerManagement::Monitor::ClassNames
     MiqNetappRefreshWorker
     MiqVmdbStorageBridgeWorker
     MiqStorageMetricsCollectorWorker
+    ManageIQ::Providers::Azure::CloudManager::RefreshWorker
     ManageIQ::Providers::Amazon::CloudManager::RefreshWorker
     ManageIQ::Providers::Foreman::ConfigurationManager::RefreshWorker
     ManageIQ::Providers::Foreman::ProvisioningManager::RefreshWorker
-    MiqEmsRefreshWorkerKubernetes
-    MiqEmsRefreshWorkerOpenshift
-    MiqEmsRefreshWorkerMicrosoft
+    ManageIQ::Providers::Kubernetes::ContainerManager::RefreshWorker
+    ManageIQ::Providers::Openshift::ContainerManager::RefreshWorker
+    ManageIQ::Providers::Microsoft::InfraManager::RefreshWorker
     ManageIQ::Providers::Redhat::InfraManager::RefreshWorker
     ManageIQ::Providers::Openstack::CloudManager::RefreshWorker
     ManageIQ::Providers::Openstack::InfraManager::RefreshWorker
@@ -80,10 +86,10 @@ module MiqServer::WorkerManagement::Monitor::ClassNames
     ManageIQ::Providers::Openstack::CloudManager::EventCatcher
     ManageIQ::Providers::Openstack::InfraManager::EventCatcher
     ManageIQ::Providers::Amazon::CloudManager::EventCatcher
-    MiqEventCatcherKubernetes
-    MiqEventCatcherOpenshift
+    ManageIQ::Providers::Kubernetes::ContainerManager::EventCatcher
+    ManageIQ::Providers::Openshift::ContainerManager::EventCatcher
     MiqUiWorker
-  }.freeze
+  ).freeze
 
   module ClassMethods
     def monitor_class_names
@@ -94,5 +100,4 @@ module MiqServer::WorkerManagement::Monitor::ClassNames
       MONITOR_CLASS_NAMES_IN_KILL_ORDER
     end
   end
-
 end

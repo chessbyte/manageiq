@@ -5,63 +5,47 @@
     .run(appRun);
 
   /** @ngInject */
-  function appRun(routerHelper, navigationHelper) {
+  function appRun(routerHelper) {
     routerHelper.configureStates(getStates());
-    navigationHelper.navItems(navItems());
-    navigationHelper.sidebarItems(sidebarItems());
   }
 
   function getStates() {
     return {
       'dashboard': {
-        url: '/dashboard',
+        parent: 'application',
+        url: '/',
         templateUrl: 'app/states/dashboard/dashboard.html',
         controller: StateController,
         controllerAs: 'vm',
-        title: 'Dashboard'
-      }
-    };
-  }
-
-  function navItems() {
-    return {
-      'profile': {
-        type: 'profile',
-        order: 0
-      }
-    };
-  }
-
-  function sidebarItems() {
-    return {
-      'dashboard': {
-        type: 'state',
-        state: 'dashboard',
-        label: 'Dashboard',
-        style: 'dashboard',
-        order: 0
+        title: 'Dashboard',
+        data: {
+          requireUser: true
+        },
+        resolve: {
+          requests: resolveRequests,
+          services: resolveServices
+        }
       }
     };
   }
 
   /** @ngInject */
-  function StateController(Dashboard, logger) {
+  function resolveRequests(CollectionsApi) {
+    return CollectionsApi.query('provision_requests');
+  }
+
+  /** @ngInject */
+  function resolveServices(CollectionsApi) {
+    var options = {expand: false};
+
+    return CollectionsApi.query('services', options);
+  }
+
+  /** @ngInject */
+  function StateController(services, requests) {
     var vm = this;
-
+    vm.servicesCount = services.count;
+    vm.requestsCount = requests.count;
     vm.title = 'Dashboard';
-    vm.onDropComplete = onDropComplete;
-
-    activate();
-    function activate() {
-      vm.chartCollection = Dashboard;
-      logger.info('Activated Dashboard View');
-    }
-
-    function onDropComplete(index, obj) {
-      vm.secondObj = vm.chartCollection[index];
-      vm.secondIndex = vm.chartCollection.indexOf(obj);
-      vm.chartCollection[index] = obj;
-      vm.chartCollection[vm.secondIndex] = vm.secondObj;
-    }
   }
 })();

@@ -15,7 +15,7 @@ module MiqServer::ConfigurationManagement
 
       VMDB::Config.refresh_configs
 
-      return cfg
+      cfg
     end
   end
 
@@ -37,8 +37,8 @@ module MiqServer::ConfigurationManagement
 
   def set_config(cfg)
     raise "Assertion Failure (MiqServer.set_config) -- config expected to be <VMDB::Config> but actually is <#{cfg.class}>" unless cfg.kind_of?(VMDB::Config)
-    self.is_local? ? cfg.save : self.set_config_remote(cfg)
-    self.reload
+    self.is_local? ? cfg.save : set_config_remote(cfg)
+    reload
   end
 
   def set_config_remote(cfg)
@@ -58,12 +58,13 @@ module MiqServer::ConfigurationManagement
         :priority    => MiqQueue::HIGH_PRIORITY,
         :zone        => nil,
         :role        => nil,
-        :server_guid => self.guid
+        :server_guid => guid
       ) if started?
     end
   end
 
   def sync_config
+    @blacklisted_events = true
     @vmdb_config = VMDB::Config.new("vmdb")
     sync_log_level
     sync_worker_monitor_settings
@@ -77,7 +78,10 @@ module MiqServer::ConfigurationManagement
       VMDB::Config.invalidate("vmdb")
       @vmdb_config = VMDB::Config.new("vmdb")
     end
-    stale
+    stale || @blacklisted_events.nil?
   end
 
+  def sync_blacklisted_event_names
+    @blacklisted_events = nil
+  end
 end

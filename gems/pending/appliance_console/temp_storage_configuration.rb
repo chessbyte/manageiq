@@ -2,9 +2,9 @@ require "appliance_console/logging"
 
 module ApplianceConsole
   class TempStorageConfiguration
-    TEMP_DISK_FILESYSTEM_TYPE = "ext4".freeze
+    TEMP_DISK_FILESYSTEM_TYPE = "xfs".freeze
     TEMP_DISK_MOUNT_POINT     = Pathname.new("/var/www/miq_tmp").freeze
-    TEMP_DISK_MOUNT_OPTS      = "rw,noatime,data=writeback,barrier=0,nobh".freeze
+    TEMP_DISK_MOUNT_OPTS      = "rw,noatime,nobarrier".freeze
 
     attr_reader :disk
 
@@ -34,7 +34,7 @@ module ApplianceConsole
     end
 
     def format_partition(partition)
-      LinuxAdmin.run!("mke2fs -t #{TEMP_DISK_FILESYSTEM_TYPE} #{partition.path}")
+      LinuxAdmin.run!("mkfs.#{TEMP_DISK_FILESYSTEM_TYPE} #{partition.path}")
     end
 
     def mount_temp_disk(partition)
@@ -72,7 +72,7 @@ module ApplianceConsole
       LinuxAdmin.run!("parted -s #{disk.path} mkpart primary 0% 100%")
 
       # FIXME: Refetch the disk after creating the partition
-      disk = LinuxAdmin::Disk.local.select { |d| d.path == disk.path }.first
+      disk = LinuxAdmin::Disk.local.find { |d| d.path == disk.path }
       disk.partitions.first
     end
   end # class TempStorageConfiguration

@@ -5,10 +5,8 @@
     .run(appRun);
 
   /** @ngInject */
-  function appRun(routerHelper, navigationHelper) {
+  function appRun(routerHelper) {
     routerHelper.configureStates(getStates());
-    navigationHelper.navItems(navItems());
-    navigationHelper.sidebarItems(sidebarItems());
   }
 
   function getStates() {
@@ -26,48 +24,73 @@
     };
   }
 
-  function navItems() {
-    return {};
-  }
+  /** @ngInject */
+  function resolveService($stateParams, CollectionsApi) {
+    var requestAttributes = [
+      'picture', 
+      'picture.image_href',
+      'evm_owner.name',
+      'miq_group.description',
+      'aggregate_all_vm_cpus',
+      'aggregate_all_vm_memory',
+      'aggregate_all_vm_disk_count',
+      'aggregate_all_vm_disk_space_allocated',
+      'aggregate_all_vm_disk_space_used',
+      'aggregate_all_vm_memory_on_disk'
+    ];
+    var options = {attributes: requestAttributes};
 
-  function sidebarItems() {
-    return {};
+    return CollectionsApi.get('services', $stateParams.serviceId, options);
   }
 
   /** @ngInject */
-  function resolveService(Service, $stateParams) {
-    return Service.get({id: $stateParams.serviceId, 'includes[]': ['product', 'project', 'latest_alerts']}).$promise;
-  }
-
-  /** @ngInject */
-  function StateController(logger, service, $stateParams) {
+  function StateController($state, service, CollectionsApi, EditServiceModal, RetireServiceModal) {
     var vm = this;
 
     vm.title = 'Service Details';
-
-    vm.serviceId = $stateParams.serviceId;
     vm.service = service;
 
     vm.activate = activate;
-    vm.toAlertType = toAlertType;
+    vm.removeService = removeService;
+    vm.editServiceModal = editServieModal;
+    vm.retireServiceNow = retireServiceNow;
+    vm.retireServiceLater = retireServiceLater;
 
     activate();
 
     function activate() {
-      logger.info('Activated Service Details View');
     }
 
-    function toAlertType(type) {
-      switch (type.toLowerCase()) {
-        case 'critical':
-          return 'danger';
-        case 'warning':
-          return 'warning';
-        case 'ok':
-          return 'success';
-        default:
-          return 'info';
+    function removeService() {
+      var removeAction = {action: 'retire'};
+      CollectionsApi.post('services', vm.service.id, {}, removeAction).then(removeSuccess, removeFailure);
+
+      function removeSuccess() {
+        $state.go('services.list');
       }
+
+      function removeFailure(data) {
+      }
+    }
+
+    function editServieModal() {
+      EditServiceModal.showModal(vm.service);
+    }
+
+    function retireServiceNow() {
+      var data = {action: 'retire'};
+      CollectionsApi.post('services', vm.service.id, {}, data).then(retireSuccess, retireFailure);
+
+      function retireSuccess() {
+        $state.go('services.list');
+      }
+
+      function retireFailure() {
+      }
+    }
+
+    function retireServiceLater() {
+      RetireServiceModal.showModal(vm.service);
     }
   }
 })();

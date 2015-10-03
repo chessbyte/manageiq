@@ -17,11 +17,11 @@
     'blocks.directive-options',
     'blocks.recursion',
 
+    'app.resources',
+    'app.services',
+
     // Third party modules
     'ui.router',
-    'ui.bootstrap',
-    'ngDraggable',
-    'angular.filter',
-    'highcharts-ng'
+    'base64'
   ]);
 })();

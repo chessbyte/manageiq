@@ -10,14 +10,12 @@
 
   .tab-content
     = miq_tab_content('default', 'default') do
-      %table.style1
-        %tbody
+      .form-horizontal
         = render(:partial => "/layouts/auth_bearer_token",
                  :locals  => {:pfx          => "bearer",
                               :change_url   => change_url,
                               :ujs_button   => true,
                               :record       => record})
-    %span{:style => "color:black"}= _("Optional.")
 
 %hr
 :javascript

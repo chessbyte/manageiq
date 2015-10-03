@@ -10,6 +10,7 @@
       restrict: 'AE',
       scope: {
         position: '@?confirmationPosition',
+        title: '@?confirmationTitle',
         message: '@?confirmationMessage',
         trigger: '@?confirmationTrigger',
         ok: '@?confirmationOkText',
@@ -17,7 +18,6 @@
         onOk: '&confirmationOnOk',
         onCancel: '&?confirmationOnCancel',
         okStyle: '@?confirmationOkStyle',
-        cancelStyle: '@?confirmationCancelStyle',
         confirmIf: '=?confirmationIf',
         showCancel: '=?confirmationShowCancel'
       },
@@ -53,10 +53,10 @@
         var width;
         var sizerMessage = attrs.confirmationMessage || 'For Sizing';
         var sizer = angular.element('<div class="confirmation__dialog"><div class="confirmation__content">' +
-        '<div class="confirmation__body"><p class="confirmation_message">' + sizerMessage +
-        '</p><div class="confirmation_buttons">' +
-        '<button type="button" class="confirmation__button btn-rounded">For Sizing</button>' +
-        '</div></div></div></div>');
+          '<div class="confirmation__body"><p class="confirmation_message">' + sizerMessage +
+          '</p><div class="confirmation_buttons">' +
+          '<button type="button" class="confirmation__button btn-rounded">For Sizing</button>' +
+          '</div></div></div></div>');
 
         sizer.css('visibility', 'hidden');
         element.parent().append(sizer);
@@ -77,7 +77,6 @@
 
       var modalOptions = {
         templateUrl: 'app/components/confirmation/confirmation.html',
-        windowTemplateUrl: 'app/components/confirmation/confirmation-window.html',
         scope: $scope
       };
 
@@ -90,12 +89,12 @@
       function activate(api) {
         angular.extend(vm, api);
         vm.position = angular.isDefined(vm.position) ? vm.position : 'top-center';
+        vm.title = angular.isDefined(vm.title) ? vm.title : false;
         vm.message = angular.isDefined(vm.message) ? vm.message : 'Are you sure you wish to proceed?';
         vm.ok = angular.isDefined(vm.ok) ? vm.ok : 'Ok';
         vm.cancel = angular.isDefined(vm.cancel) ? vm.cancel : 'Cancel';
         vm.onCancel = angular.isDefined(vm.onCancel) ? vm.onCancel : angular.noop;
-        vm.okClass = angular.isDefined(vm.okStyle) ? 'btn-rounded--' + vm.okStyle : '';
-        vm.cancelClass = angular.isDefined(vm.cancelStyle) ? 'btn-rounded--' + vm.cancelStyle : 'btn-rounded--gray';
+        vm.okClass = angular.isDefined(vm.okStyle) ? 'btn-' + vm.okStyle : '';
         vm.confirmIf = angular.isDefined(vm.confirmIf) ? vm.confirmIf : true;
         vm.showCancel = angular.isDefined(vm.showCancel) ? vm.showCancel : true;
       }
@@ -109,9 +108,17 @@
           vm.top = position.top - vm.getOffset();
 
           modal = $modal.open(modalOptions);
-          modal.result.then(vm.onOk, vm.onCancel);
+          modal.result.then(onOk, onCancel);
         } else {
           vm.onOk();
+        }
+
+        function onOk() {
+          vm.onOk();
+        }
+
+        function onCancel() {
+          vm.onCancel();
         }
       }
 

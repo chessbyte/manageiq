@@ -73,7 +73,7 @@ function miqPrepRightCellForm(tree) {
   if ($('#adv_searchbox_div').length) {
     $('#adv_searchbox_div').hide();
   }
-  dhxLayoutB.cells("a").collapse();
+  ManageIQ.layout.toolbar.hide();
   $('#' + tree).dynatree('disable');
   miqDimDiv(tree + '_div', true);
 }
@@ -615,9 +615,15 @@ function miqPassFields(url, args) {
 // Load XML/SWF charts data (non-IE)
 // This method is called by the XML/SWF charts when a chart is loaded into the DOM
 function Loaded_Chart(chart_id) {
-  if ((ManageIQ.browser != 'Explorer') &&
-      (typeof (ManageIQ.charts.chartData) != 'undefined')) {
-    doLoadChart(chart_id, document.getElementsByName(chart_id)[0]);
+  if (ManageIQ.browser != 'Explorer') {
+    if ((ManageIQ.charts.chartData === null) && (document.readyState == "loading")) {
+      setTimeout(function() { Loaded_Chart(chart_id) }, 200);
+      return;
+    }
+
+    if (ManageIQ.charts.chartData !== null) {
+      doLoadChart(chart_id, document.getElementsByName(chart_id)[0]);
+    }
   }
 }
 
@@ -689,41 +695,65 @@ function miqBuildChartMenu(col, row, value, category, series, id, message) {
   var set = id.split('_')[1]; // Get the chart set
   var idx = id.split('_')[2]; // Get the chart index
   var chart_data = ManageIQ.charts.chartData[set];
+  var chart_el_id = id.replace(/^miq_/, 'miq_chart_');
+  var chartmenu_el_id = id.replace(/^miq_/, 'miq_chartmenu_');
 
   if (chart_data[idx].menu != null && chart_data[idx].menu.length) {
     var rowcolidx = "_" + row + "-" + col + "-" + idx;
-    var miqMenu = new dhtmlXMenuObject(null, "dhx_web");
-    miqMenu.setImagePath("/assets/dhtmlx_gpl_36/imgs/");
-    miqMenu.renderAsContextMenu();
-    miqMenu.setWebModeTimeout(1000);
-    miqMenu.attachEvent("onClick", miqChartMenuClick);
-    miqMenu.setAutoHideMode(true);
 
     for (var i = 0; i < chart_data[idx].menu.length; i++) {
       var menu_id = chart_data[idx].menu[i].split(":")[0] + rowcolidx;
       var pid = menu_id.split("-")[0];
 
-      if (miqMenu.getParentId(pid) == null) {
-        miqMenu.addNewChild(miqMenu.topId, 99, pid, pid, false);
+      if ($('#' + chartmenu_el_id).find('#' + pid).length == 0) {
+        $("#" + chartmenu_el_id).append("<li class='dropdown-submenu'>" +
+          "<a tabindex='-1' href='#'>" + pid + "</a>" +
+          "<ul id='" + pid + "' class='dropdown-menu'></ul></li>");
       }
 
       var menu_title = chart_data[idx].menu[i].split(":")[1];
       menu_title = menu_title.replace("<series>", series);
       menu_title = menu_title.replace("<category>", category);
-      miqMenu.addNewChild(pid, 99, menu_id, menu_title, false);
+      $("#" + pid).append("<li><a id='" + menu_id +
+        "' href='#' onclick='miqChartMenuClick(this.id)'>" + menu_title + "</a></li>");
     }
 
-    miqMenu.showContextMenu(ManageIQ.mouse.x - 10, ManageIQ.mouse.y - 10);
+    $("#" + chartmenu_el_id).css({'left': ManageIQ.mouse.x, 'top': ManageIQ.mouse.y});
+    $('#' + chartmenu_el_id).dropdown('toggle');
+    $('#' + chart_el_id).find('.overlay').show();
   }
 }
 
 // Handle chart context menu clicks
-function miqChartMenuClick(itemId, itemValue) {
+function miqChartMenuClick(itemId) {
   if ($('#menu_div').length) {
     $('#menu_div').hide();
   }
   if (itemId != "cancel") {
     miqAsyncAjax("?menu_click=" + itemId);
+  }
+}
+
+function miqRESTAjaxButton(url, button, data) {
+  var form = $(button).parents('form:first')[0];
+  if (form) {
+    $(form).submit(function(e) {
+      e.preventDefault();
+      return false;
+    });
+    if(data != undefined) {
+      formData = data;
+    }
+    else {
+      formData = $(form).serialize();
+    }
+    miqJqueryRequest(form.action, {
+      beforeSend: true,
+      complete: true,
+      data: formData
+    });
+  } else {
+    miqAjaxButton(url, true);
   }
 }
 
@@ -885,17 +915,17 @@ function miqEnableLoginFields(enabled) {
 // Initialize dashboard column jQuery sortables
 function miqInitDashboardCols() {
   if ($('#col1').length) {
-    $('#col1').sortable({connectWith: '#col2, #col3', handle: "h2"});
+    $('#col1').sortable({connectWith: '#col2, #col3', handle: "h3"});
     $('#col1').off('sortupdate');
     $('#col1').on('sortupdate', miqDropComplete);
   }
   if ($('#col2').length) {
-    $('#col2').sortable({connectWith: '#col1, #col3', handle: "h2"});
+    $('#col2').sortable({connectWith: '#col1, #col3', handle: "h3"});
     $('#col2').off('sortupdate');
     $('#col2').on('sortupdate', miqDropComplete);
   }
   if ($('#col3').length) {
-    $('#col3').sortable({connectWith: '#col1, #col2', handle: "h2"});
+    $('#col3').sortable({connectWith: '#col1, #col2', handle: "h3"});
     $('#col3').off('sortupdate');
     $('#col3').on('sortupdate', miqDropComplete);
   }
@@ -921,12 +951,12 @@ function miqBuildCalendar() {
 
   all.each(function () {
     var element = $(this);
+    var observeDateBackup = null;
 
     if (! element.data('datepicker')) {
-      var observeDateBackup = ManageIQ.observeDate;
+      observeDateBackup = ManageIQ.observeDate;
       ManageIQ.observeDate = function() {};
       element.datepicker();
-      ManageIQ.observeDate = observeDateBackup;
     }
 
     if (typeof ManageIQ.calendar.calDateFrom != "undefined") {
@@ -939,6 +969,10 @@ function miqBuildCalendar() {
 
     if (typeof miq_cal_skipDays != "undefined") {
       element.datepicker('setDaysOfWeekDisabled', miq_cal_skipDays);
+    }
+
+    if (observeDateBackup != null) {
+      ManageIQ.observeDate = observeDateBackup;
     }
   });
 }
@@ -1016,6 +1050,9 @@ function miq_tabs_init(id, url) {
   // Hide the tab header when there is only one visible tab available
   if ($(id + ' > ul.nav-tabs > li:not(.hidden)').length == 1) {
     $(id + ' > ul.nav-tabs').hide();
+  }
+  else if ($(id + ' > ul.nav-tabs > li:not(.hidden)').length > 1) {
+    $(id + ' > ul.nav-tabs').show();
   }
 }
 
@@ -1196,7 +1233,7 @@ function miqDomElementExists(element) {
 }
 
 function miqSerializeForm(element) {
-  return $('#' + element).find('input,select,textarea').serialize();
+  return $('#' + element).find('input,select,textarea').serialize().replace(/%0D%0A/g, '%0A');
 }
 
 function miqSerializeField(element, field_name) {
@@ -1211,10 +1248,13 @@ function miqInitSelectPicker() {
   });
 }
 
-function miqSelectPickerEvent(element, url){
+function miqSelectPickerEvent(element, url, options){
   $('#' + element).on('change', function(){
     var selected = $('#' + element).val();
-    miqJqueryRequest(url + '?' + element + '=' + selected);
+    options =  typeof options !== 'undefined' ? options : {}
+    options['no_encoding'] = true;
+    miqJqueryRequest(url + '?' + element + '=' + escape(selected), options);
     return true;
   });
 }
+

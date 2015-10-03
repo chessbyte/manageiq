@@ -5,10 +5,8 @@
     .run(appRun);
 
   /** @ngInject */
-  function appRun(routerHelper, navigationHelper) {
+  function appRun(routerHelper) {
     routerHelper.configureStates(getStates());
-    navigationHelper.navItems(navItems());
-    navigationHelper.sidebarItems(sidebarItems());
   }
 
   function getStates() {
@@ -18,7 +16,7 @@
         templateUrl: 'app/states/services/list/list.html',
         controller: StateController,
         controllerAs: 'vm',
-        title: 'Services',
+        title: 'Service List',
         resolve: {
           services: resolveServices
         }
@@ -26,54 +24,105 @@
     };
   }
 
-  function navItems() {
-    return {};
-  }
+  /** @ngInject */
+  function resolveServices(CollectionsApi) {
+    var options = {expand: 'resources', attributes: ['picture', 'picture.image_href']};
 
-  function sidebarItems() {
-    return {};
+    return CollectionsApi.query('services', options);
   }
 
   /** @ngInject */
-  function resolveServices(Service) {
-    return Service.query({'includes[]': ['product', 'project']}).$promise;
-  }
-
-  /** @ngInject */
-  function StateController(logger, services, lodash, $state) {
+  function StateController($state, services) {
     /* jshint validthis: true */
     var vm = this;
 
-    vm.services = services;
+    vm.title = 'Service List';
+    vm.services = services.resources;
+    vm.servicesList = angular.copy(vm.services);
 
-    vm.activate = activate;
-    vm.title = 'Services';
-    vm.goTo = goTo;
+    vm.listConfig = {
+      selectItems: false,
+      showSelectBox: false,
+      selectionMatchProp: 'service_status',
+      onClick: handleClick
+    };
 
-    activate();
+    vm.toolbarConfig = {
+      filterConfig: {
+        fields: [
+          {
+            id: 'name',
+            title: 'Service Name',
+            placeholder: 'Filter by Service Name',
+            filterType: 'text'
+          },
+          {
+            id: 'id',
+            title: 'Service Id',
+            placeholder: 'Filter by Service ID',
+            filterType: 'text'
+          }
+        ],
+        resultsCount: vm.servicesList.length,
+        appliedFilters: [],
+        onFilterChange: filterChange
+      }
+    };
 
-    function activate() {
-      logger.info('Activated Service View');
-
-      vm.projects = lodash.map(lodash.groupBy(services, 'project_id'), buildProjectHash);
+    function handleClick(item, e) {
+      $state.go('services.details', {serviceId: item.id});
     }
 
-    function buildProjectHash(value) {
-      return {
-        project: value[0].project,
-        services: lodash.map(value, appendProperties)
-      };
+    function filterChange(filters) {
+      vm.filtersText = '';
+      angular.forEach(filters, filterTextFactory);
 
-      // Useful for making properties available on the service for sorting purposes
-      function appendProperties(service) {
-        service.product_name = service.product.name;
+      function filterTextFactory(filter) {
+        vm.filtersText += filter.title + ' : ' + filter.value + '\n';
+      }
 
-        return service;
+      applyFilters(filters);
+      vm.toolbarConfig.filterConfig.resultsCount = vm.servicesList.length;
+    }
+
+    function applyFilters(filters) {
+      vm.servicesList = [];
+      if (filters && filters.length > 0) {
+        angular.forEach(vm.services, filterChecker);
+      } else {
+        vm.servicesList = vm.services;
+      }
+
+      function filterChecker(item) {
+        if (matchesFilters(item, filters)) {
+          vm.servicesList.push(item);
+        }
       }
     }
 
-    function goTo(serviceId, productId) {
-      $state.go('services.details', {serviceId: serviceId, productId: productId});
+    function matchesFilters(item, filters) {
+      var matches = true;
+      angular.forEach(filters, filterMatcher);
+
+      function filterMatcher(filter) {
+        if (!matchesFilter(item, filter)) {
+          matches = false;
+
+          return false;
+        }
+      }
+
+      return matches;
+    }
+
+    function matchesFilter(item, filter) {
+      if ('name' === filter.id) {
+        return item.name.toLowerCase().indexOf(filter.value.toLowerCase()) !== -1;
+      } else if ('id' === filter.id) {
+        return Number(item.id) === Number(filter.value);
+      }
+
+      return false;
     }
   }
 })();

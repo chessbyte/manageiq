@@ -86,7 +86,7 @@ describe('scheduleFormController', function() {
     });
 
     it('sets the scheduleDate', function() {
-      expect($scope.scheduleModel.start_date).toEqual(new Date('01/01/2015'));
+      expect($scope.scheduleModel.start_date).toEqual(moment('01/01/2015').format('MM/DD/YYYY'));
     });
 
     it('sets the scheduleStartHour', function() {
@@ -145,7 +145,7 @@ describe('scheduleFormController', function() {
       });
 
       it('sets the scheduleDate to today', function() {
-        expect($scope.scheduleModel.start_date).toEqual(new Date("01/03/2014"));
+        expect($scope.scheduleModel.start_date).toEqual(moment("01/03/2014").format('MM/DD/YYYY'));
       });
 
       it('sets the scheduleTimerType to once', function() {
@@ -713,6 +713,39 @@ describe('scheduleFormController', function() {
       it('returns true', function() {
         expect($scope.timerNotOnce()).toBe(true);
       });
+    });
+  });
+
+  describe('Validates credential fields', function() {
+    beforeEach(inject(function($compile, miqService) {
+      var angularForm;
+      var element = angular.element(
+        '<form name="angularForm">' +
+        '<input ng-model="scheduleModel.depot_name" name="depot_name" required" text />' +
+        '<input ng-model="scheduleModel.uri" name="uri" required text />' +
+        '<input ng-model="scheduleModel.log_userid" name="log_userid" required text />' +
+        '<input ng-model="scheduleModel.log_password" name="log_password" required text />' +
+        '<input ng-model="scheduleModel.log_verify" name="log_verify" required text />' +
+        '</form>'
+      );
+
+      $compile(element)($scope);
+      $scope.$digest();
+      angularForm = $scope.angularForm;
+
+      $scope.angularForm.depot_name.$setViewValue('abc');
+      $scope.angularForm.uri.$setViewValue('abc');
+      $scope.angularForm.log_userid.$setViewValue('abcuser');
+      $scope.angularForm.log_password.$setViewValue('abcpassword');
+      $scope.angularForm.log_verify.$setViewValue('abcpassword');
+    }));
+
+    it('returns true if all the Validation fields are filled in', function() {
+      expect($scope.canValidateBasicInfo()).toBe(true);
+    });
+
+    it('returns true if all the Validation fields are filled in and dirty', function() {
+      expect($scope.canValidate()).toBe(true);
     });
   });
 });

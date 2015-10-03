@@ -16,6 +16,14 @@ ManageIQ.angularApplication.service('miqService', function() {
     miqAjaxButton(url, serializeFields);
   };
 
+  this.restAjaxButton = function(url, button, data) {
+    miqRESTAjaxButton(url, button, data);
+  };
+
+  this.jqueryRequest = function(url, options) {
+    miqJqueryRequest(url, options);
+  };
+
   this.sparkleOn = function() {
     miqSparkleOn();
   };
@@ -52,10 +60,10 @@ ManageIQ.angularApplication.service('miqService', function() {
       var outerBox = $('<div class="alert alert-success">');
       var innerSpan = $('<span class="pficon pficon-ok">');
     }
-      $(outerBox).append(innerSpan);
-      $(outerBox).append(txt);
-      $(outerMost).append(outerBox);
-      $(outerMost).appendTo($("#flash_msg_div"));
+    $(outerBox).append(innerSpan);
+    $(outerBox).append(txt);
+    $(outerMost).append(outerBox);
+    $(outerMost).appendTo($("#flash_msg_div"));
   }
 
   this.miqFlashClear = function() {
@@ -66,47 +74,25 @@ ManageIQ.angularApplication.service('miqService', function() {
     return form.$valid && form.$dirty;
   };
 
-  this.canValidate = function (form) {
-    if (this.validateFieldsValid(form) && this.validateFieldsDirty(form))
-      return true;
-    else
-      return false;
-  }
+  this.validateWithAjax = function (url) {
+    miqSparkleOn();
+    miqAjaxButton(url, true);
+  };
 
-  this.canValidateBasicInfo = function () {
-    if (ManageIQ.angularApplication.$scope.isBasicInfoValid())
-      return true;
-    else
-      return false;
-  }
+  this.validateWithREST = function($event, credType, url, formSubmit) {
+    angular.element('#button_name').val('validate');
+    angular.element('#cred_type').val(credType);
+    if(formSubmit) {
+      miqSparkleOn();
+      miqRESTAjaxButton(url, $event.target);
+    }
+    else {
+      $event.preventDefault();
+    }
+  };
 
-  this.validateFieldsValid = function (form) {
-    if (form != undefined &&
-      form.depot_name.$valid &&
-      form.uri.$valid &&
-      form.log_userid.$valid &&
-      form.log_password.$valid &&
-      form.log_verify.$valid)
-      return true;
-    else
-      return false;
-  }
-
-  this.validateFieldsDirty = function (form) {
-    if (form != undefined &&
-      form.depot_name.$dirty ||
-      form.uri.$dirty ||
-      form.log_userid.$dirty ||
-      form.log_password.$dirty ||
-      form.log_verify.$dirty)
-      return true;
-    else
-      return false;
-  }
-
-   this.validateClicked = function (url) {
-     this.sparkleOn();
-     this.miqAjaxButton(url, true);
+  this.disabledClick = function($event) {
+    $event.preventDefault();
   };
 
   this.serializeModel = function(model) {
