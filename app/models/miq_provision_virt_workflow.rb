@@ -34,7 +34,6 @@ class MiqProvisionVirtWorkflow < MiqProvisionWorkflow
     end
   end
 
-
   def initialize(values, requester, options = {})
     instance_var_init(values, requester, options)
     load_source_object if initial_pass?(values, options)
