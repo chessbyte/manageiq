@@ -1,11 +1,7 @@
 class MiqProvisionOrchWorkflow < MiqProvisionVirtWorkflow
 
-  def load_source_object
-    src_obj_id = get_value(@values[:src_vm_id])
-    unless src_obj_id.blank?
-      src_obj = OrchestrationTemplate.find_by(:id => src_obj_id)
-      @values[:src_vm_id] = [src_obj.id, src_obj.name] unless src_obj.blank?
-    end
+  private_class_method def self.source_object_class
+    OrchestrationTemplate
   end
 
   def get_source_and_targets(refresh = false)

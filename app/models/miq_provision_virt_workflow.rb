@@ -9,10 +9,14 @@ class MiqProvisionVirtWorkflow < MiqProvisionWorkflow
     (options[:initial_pass] == true) || values.blank?
   end
 
+  private_class_method def self.source_object_class
+    VmOrTemplate
+  end
+
   def load_source_object
     src_vm_id = get_value(@values[:src_vm_id])
     unless src_vm_id.blank?
-      vm = VmOrTemplate.find_by(:id => src_vm_id)
+      vm = self.class.source_object_class.find_by(:id => src_vm_id)
       @values[:src_vm_id] = [vm.id, vm.name] unless vm.blank?
     end
   end
